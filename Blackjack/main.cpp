@@ -1,10 +1,14 @@
 #include "Deck.h"
 #include <iostream>
 #include "Player.h"
+#include <string>
+#include <cctype>
+
+using namespace std;
 
 int main()
 {
-	char newGame;
+	string newGame;
 	Player dealer, player;
 
 	while(true)
@@ -13,30 +17,44 @@ int main()
 
 		while(true) // deciding to play on or leave
 		{
-			cout << "Next hand? (y/n)" << endl;
+			cout << "Play? (y/n)" << endl;
 			cin >> newGame;
 			cout << endl;
 
-			if (newGame == 'y')
+			if (newGame == "y" || newGame == "Y")
 				break;
-			if (newGame == 'n')
+			if (newGame == "n" || newGame == "N")
+			{
+				system("pause");
 				return 0;
+			}
 			
 			cout << "Error! Bad input!" << endl;
 		}
 
 		int bet;
+		string betString;
 		while(true) // betting
 		{
 			cout << "How much would you like to bet?" << endl;
-			cin >> bet;
-			if (bet <= player.GetBalance())
-			{
-				player.Bet(bet);
-				break;
-			}
+			cin >> betString;
 
-			cout << "Invalid bet!" << endl;
+			int i;// looks for non-digit characters in input
+			for (i = 0; betString[i] != '\0' && isdigit(betString[i]); i++); 
+			if(!isdigit(betString[i]) && betString[i] != '\0')
+			{
+					cout << "Invalid bet!" << endl << endl;
+			}
+			else
+			{
+				bet = stoi(betString);
+				if (bet <= player.GetBalance())
+				{
+					player.Bet(bet);
+					break;
+				}
+				cout << "Player does not have enough money!" << endl << endl;
+			}
 		}
 
 		cout << endl << "Dealer takes a new pack of cards..." << endl; //the beginning stage
@@ -65,21 +83,28 @@ int main()
 		dealer.DrawCard(newCard);
 		cout << endl << endl;
 
-		char drawCard;
-
+		bool playerWinFlag = false, dealerWinFlag = false; // case when someone gets a "natural"
+		if (player.CountPoints() == 21)
+			playerWinFlag = true;
+		else if (dealer.CountPoints() == 21)
+			dealerWinFlag = true;
+			
+		string drawCard;
 		while (true) // the playing stage
 		{
+			if (playerWinFlag || dealerWinFlag)
+				break;
+
 			cout << "Would you like to draw a card? (y/n)" << endl;
 			cin >> drawCard;
 			cout << endl;
 
-			if (drawCard == 'n')
+			if (drawCard == "n" || drawCard == "N")
 			{
 				cout << "Player stays." << endl << endl;
 				break;
 			}
-
-			if (drawCard != 'y')
+			if (drawCard != "y" && drawCard != "Y")
 			{
 				cout << "Error! Bad input!" << endl;
 				continue;
@@ -93,7 +118,7 @@ int main()
 
 			if (player.IsBust())
 			{
-				cout << "Player went bust!" << endl;
+				cout << "Player went bust!" << endl << endl;
 				break;
 			}
 
@@ -104,6 +129,9 @@ int main()
 
 		while(dealer.CountPoints() < 17) // the dealer's move
 		{
+			if (dealerWinFlag || playerWinFlag)
+				break;
+
 			cout << "Dealer takes: " << endl;
 			newCard = gameDeck.Draw();
 			newCard.Print();
@@ -121,71 +149,49 @@ int main()
 			cout << endl;
 		}
 
-		cout << "Dealer stays." << endl << endl;
-
-
-		int result; // checking who won, 0 - draw, 1 - player, 2 - dealer
-		const auto playerPoints = player.CountPoints();
-		const auto dealerPoints = dealer.CountPoints();
-		const auto playerCards = player.CardsInHand();
-		const auto dealerCards = dealer.CardsInHand();
+		int result; // check who won, 0 - draw, 1 - player, 2 - dealer
 		
-		if (playerPoints > 21 || dealerPoints > 21)
+		if (!dealerWinFlag && !playerWinFlag)
 		{
-			if (dealerPoints <= 21)
-			{
-				result = 2;
-			}
-			else if (playerPoints <= 21)
-			{
-				result = 1;
-			}
-			else
-			{
+			cout << "Dealer stays." << endl << endl;
+
+			const auto playerPoints = player.CountPoints();
+			const auto dealerPoints = dealer.CountPoints();
+
+			if (playerPoints > 21 && dealerPoints > 21) // checking for busts
 				result = 0;
-			}
+			else if (dealerPoints > 21)
+				result = 1;
+			else if (playerPoints > 21)
+				result = 2;
+			else if (playerPoints < dealerPoints) // checking for equal point cases
+				result = 2;
+			else if (playerPoints > dealerPoints) // basic cases
+				result = 1;
+			else
+				result = 0;
 		}
-		else if (playerPoints > dealerPoints)
-		{
+		else if (playerWinFlag)
 			result = 1;
-		}
-		else if (playerPoints == dealerPoints)
-		{
-			if (playerCards < dealerCards)
-			{
-				result = 1;
-			}
-			else if (playerCards > dealerCards)
-			{
-				result = 2;
-			}
-			else
-			{
-				result = 0;
-			}
-		}
 		else
-		{
 			result = 2;
-		}
 
 		switch(result)
 		{
-		case(0):
-			cout << "Draw!" << endl << endl;
-			player.Win(bet);
-			break;
-		case(1):
-			cout << "Player wins!" << endl << endl;
-			player.Win(bet * 2);	
-			break;
-		case(2):
-			cout << "Dealer wins!" << endl << endl;
-			break;
-		default:
-			cout << "Error!" << endl;
+			case(0):
+				cout << "Draw!" << endl << endl;
+				player.Win(bet);
+				break;
+			case(1):
+				cout << "Player wins!" << endl << endl;
+				player.Win(bet * 2);	
+				break;
+			case(2):
+				cout << "Dealer wins!" << endl << endl;
+				break;
+			default:
+				cout << "Error!" << endl;
 		}
-			
 
 		cout << "Player points: " << player.CountPoints() << endl;
 		cout << "Dealer points: " << dealer.CountPoints() << endl;
@@ -193,6 +199,7 @@ int main()
 		if(!player.GetBalance()) // checking if player is sleeping on the street tonight
 		{
 			cout << "Game over!" << endl;
+			system("pause");
 			return 0;
 		}
 

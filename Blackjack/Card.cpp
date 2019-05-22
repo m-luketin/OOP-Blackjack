@@ -8,33 +8,23 @@ Card::Card()
 	rank = UndefinedRank;
 }
 
-void Card::SetSuit(int suitToSet)
+Card::Card(int rankToSet, int suitToSet)
 {
 	suit = Suit(suitToSet);
-}
-
-void Card::SetRank(int rankToSet)
-{
 	rank = Rank(rankToSet);
 }
 
-Card::Card(int rank, int suit)
-{
-	SetSuit(suit);
-	SetRank(rank);
-}
-
-Rank Card::GetRank()
+Rank Card::GetRank() const
 {
 	return rank;
 }
 
-Suit Card::GetSuit()
+Suit Card::GetSuit() const
 {
 	return suit;
 }
 
-void Card::Print()
+void Card::Print() const
 {
 	std::string rankArray[14] = { "Ace", "Two", "Three", "Four", "Five",
 		"Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King" };
